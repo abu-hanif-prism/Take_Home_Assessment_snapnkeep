@@ -30,3 +30,7 @@ If you are developing a production application, we recommend enabling type-aware
 ```
 
 See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+
+## Assumptions
+
+- The brief calls for displaying a product description, but the live API (`GET /api/products`, `GET /api/products/:id` on `VITE_API_URL`) does not return a `description` field — only `_id`, `name`, `price`, `quantity`, `imageUrl`, `createdAt`, `updatedAt`. `Product.description` in [`src/lib/types.ts`](src/lib/types.ts) is modeled as optional (`description?: string`) to keep the UI ready for it without assuming data that the API doesn't currently provide.
