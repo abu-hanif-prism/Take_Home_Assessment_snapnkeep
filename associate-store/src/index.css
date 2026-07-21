@@ -1,25 +1,42 @@
 @import "tailwindcss";
 
+@theme {
+  --color-primary: #7d1935;
+  --color-primary-dark: #5c1226;
+  --color-primary-light: #a83a56;
+  --color-pink: #f2b8c6;
+  --color-pink-light: #fbe6ea;
+  /* Cool light-gray "surface" tone — deliberately NOT warm/cream. Used for
+     sections that need to read as a distinct layer from the page (footer,
+     alternating rows), never as the base page fill. */
+  --color-cream: #f4f3f6;
+  --color-ink: #2b1420;
+
+  --font-sans: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-heading: 'Outfit', system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
+  --text: #6b5b62;
+  --text-h: #2b1420;
+  /* Pure white, not off-white/cream — the page's base fill everywhere. */
+  --bg: #ffffff;
+  --border: #ece7ea;
   --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
+  --accent: #7d1935;
+  --accent-bg: rgba(125, 25, 53, 0.08);
+  --accent-border: rgba(125, 25, 53, 0.35);
   --social-bg: rgba(244, 243, 236, 0.5);
   --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+    rgba(125, 25, 53, 0.08) 0 10px 25px -5px, rgba(125, 25, 53, 0.06) 0 4px 8px -2px;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --sans: var(--font-sans);
+  --heading: var(--font-heading);
   --mono: ui-monospace, Consolas, monospace;
 
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
-  color-scheme: light dark;
+  color-scheme: light;
   color: var(--text);
   background: var(--bg);
   font-synthesis: none;
@@ -32,82 +49,330 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}
-
+/* No fixed width/centering here on purpose: capping #root at a hard pixel
+   width and centering it left a flat, differently-shaded void down both
+   sides of the viewport on anything wider than that cap — exactly the
+   "doesn't fit the browser" look this replaces. #root now simply fills the
+   viewport; each section (header/main/footer) paints its own full-width
+   background, and only the CONTENT inside gets a max-width + auto margins
+   (see Layout.tsx's `mx-auto max-w-7xl` wrappers) — so wide screens see
+   one continuous page, not a boxed card floating in empty space. */
+/* The dot-grid texture lives here, not on `body` — #root sits directly on
+   top of body and paints its own opaque fill, which was silently covering
+   anything set on body underneath it (found by checking computed styles
+   when the first attempt rendered as nothing: body's background-image was
+   applied correctly, just never painted because #root's solid color always
+   wins on top of it). A uniform tiled pattern rather than positioned
+   gradient blobs also sidesteps the earlier problem of a wash landing
+   behind the opaque sticky header — a repeating pattern has no single
+   "center" that can end up hidden, so it's guaranteed visible in every
+   white gap on every page. */
 #root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
   min-height: 100svh;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
+  text-align: left;
+  background-color: var(--bg);
+  background-image: radial-gradient(rgba(125, 25, 53, 0.16) 1.5px, transparent 1.5px);
+  background-size: 26px 26px;
 }
 
 body {
   margin: 0;
+  background: var(--bg);
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
+/* `@layer base` matters here, not just organization: CSS cascade layers
+   give ANY layered rule priority over unlayered rules regardless of
+   specificity — an unlayered `h2 { font-size: 22px }` beats even a
+   Tailwind utility class on that same element. These were unlayered
+   originally, which silently defeated every text-size/color utility ever
+   applied to an h1/h2 in this app (found via group-hover:text-primary
+   rendering as ink, not primary, on hover — and confirmed a product card's
+   `text-lg` was rendering at the hardcoded 19px from here, not 18px).
+   `!important` utilities (`!text-white`, `!mb-0`) were unaffected — layered
+   important beats unlayered important, the cascade's one exception, which
+   is why some of this went unnoticed until a non-`!` utility hit it. */
+@layer base {
+  h1,
+  h2 {
+    font-family: var(--heading);
+    font-weight: 600;
+    color: var(--text-h);
+  }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+  h1 {
+    font-size: 42px;
+    letter-spacing: -1px;
+    margin: 0 0 8px;
+    @media (max-width: 1024px) {
+      font-size: 30px;
+      margin: 0 0 6px;
+    }
+  }
+  h2 {
+    font-size: 22px;
+    line-height: 118%;
+    letter-spacing: -0.24px;
+    margin: 0 0 8px;
+    @media (max-width: 1024px) {
+      font-size: 19px;
+    }
+  }
+  p {
+    margin: 0;
+  }
+
+  code,
+  .counter {
+    font-family: var(--mono);
+    display: inline-flex;
+    border-radius: 4px;
+    color: var(--text-h);
+  }
+
+  code {
+    font-size: 15px;
+    line-height: 135%;
+    padding: 4px 8px;
+    background: var(--code-bg);
   }
 }
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
-p {
-  margin: 0;
+
+.animate-modal-in {
+  animation: modal-in 0.15s ease-out;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.toast-in {
+  animation: toast-in 0.2s ease-out;
+}
+
+@keyframes retry-progress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+/* animation-duration is set inline per attempt (see Cart.tsx) since the
+   actual jittered delay is only known at runtime, not at build time. */
+.retry-progress-bar {
+  animation-name: retry-progress;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes blob-float {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-4%, 3%) scale(1.05);
+  }
+}
+
+.hero-blob {
+  animation: blob-float 9s ease-in-out infinite;
+}
+
+/* ── Products hero: slow "aurora" background ──────────────────────────
+   Three independently-drifting color washes (different paths, durations,
+   delays) instead of one shared keyframe — the point is that they never
+   sync up, so the blend keeps subtly reshaping itself over a couple of
+   minutes rather than visibly looping. Deliberately slow (20-36s per
+   cycle): fast enough to read as "alive," slow enough to sit behind text
+   without ever fighting for attention. */
+@keyframes aurora-a {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(-8%, 10%) scale(1.18);
+  }
+  66% {
+    transform: translate(6%, -6%) scale(0.92);
+  }
+}
+@keyframes aurora-b {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(9%, -8%) scale(1.12);
+  }
+  66% {
+    transform: translate(-7%, 7%) scale(0.9);
+  }
+}
+@keyframes aurora-c {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-10%, -10%) scale(1.25);
+  }
+}
+@keyframes ring-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.aurora-a {
+  animation: aurora-a 24s ease-in-out infinite;
+}
+.aurora-b {
+  animation: aurora-b 30s ease-in-out infinite;
+}
+.aurora-c {
+  animation: aurora-c 20s ease-in-out infinite;
+}
+.hero-ring {
+  animation: ring-spin 120s linear infinite;
+}
+
+/* Faint dot grid for texture/depth over the aurora — a common "technical
+   sketch" layering trick so the banner reads as designed, not just a
+   flat color fill with blobs on top. */
+.hero-grid {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-a,
+  .aurora-b,
+  .aurora-c,
+  .hero-ring,
+  .hero-blob,
+  .animate-modal-in,
+  .toast-in {
+    animation: none;
+  }
+}
+
+/* ── Shared component classes ─────────────────────────────────────────
+   Defined once so every button/card in the app shares the same hover lift,
+   press feedback, and shadow depth, instead of each page re-deriving its
+   own slightly-different `hover:bg-primary-dark` one-off. Layered under
+   `components` so Tailwind utilities in a className (disabled:, w-full,
+   etc.) still win when combined with one of these. */
+@layer components {
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    border-radius: 9999px;
+    font-weight: 700;
+    font-size: 0.875rem;
+    line-height: 1;
+    padding: 0.7rem 1.35rem;
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease,
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      color 0.15s ease;
+  }
+  .btn:active:not(:disabled) {
+    transform: translateY(0);
+  }
+  .btn:disabled {
+    cursor: not-allowed;
+  }
+
+  .btn-primary {
+    background: var(--color-primary);
+    color: white;
+    box-shadow: 0 1px 2px rgba(125, 25, 53, 0.25);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--color-primary-dark);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+  }
+  .btn-primary:disabled {
+    background: #d1c9cb;
+    color: #f5eff0;
+    box-shadow: none;
+  }
+
+  .btn-outline {
+    background: white;
+    color: var(--text-h);
+    border: 1px solid var(--border);
+  }
+  .btn-outline:hover:not(:disabled) {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px -4px rgba(125, 25, 53, 0.2);
+  }
+  .btn-outline:disabled {
+    opacity: 0.4;
+  }
+
+  .card {
+    background: white;
+    border-radius: 1.25rem;
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 2px rgba(125, 25, 53, 0.04);
+  }
+
+  .card-hover {
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease,
+      border-color 0.2s ease;
+  }
+  .card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow);
+    border-color: rgba(125, 25, 53, 0.15);
+  }
+}
+
+/* Global focus-visible treatment: applied once here rather than repeated as
+   a Tailwind class on every button/link/custom control, so it can never be
+   forgotten on a new one. Inputs are excluded — they already carry their
+   own focus:border/focus:ring utilities, and stacking this on top of those
+   would just double up the same signal. */
+a:focus-visible,
+button:focus-visible,
+[role='button']:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
   border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
 }

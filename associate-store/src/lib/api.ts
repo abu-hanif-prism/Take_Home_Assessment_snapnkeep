@@ -3,6 +3,7 @@ import { clearTokens, getToken } from './tokenStore'
 
 const API_URL = import.meta.env.VITE_API_URL
 export const REFRESH_PATH = '/api/auth/refresh'
+const LOGIN_PATH = '/api/auth/login'
 
 // Shared by every in-flight apiFetch call so concurrent 401s trigger a single
 // refresh instead of one each. See the comment on the 401 branch below for why.
@@ -63,7 +64,17 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}, isRet
     },
   })
 
-  if (response.status === 401 && !isRetry && path !== REFRESH_PATH) {
+  // LOGIN_PATH is excluded for the same reason REFRESH_PATH is: a 401 from
+  // /api/auth/login means "wrong email/password" — there is no session yet
+  // to refresh. Without this exclusion, a failed login attempt (correctly
+  // rejected by the API) would fall into this branch, call refreshTokens()
+  // with whatever refresh token happens to be in localStorage (often none),
+  // get ITS OWN 401/400 back, and hard-navigate to /login via
+  // window.location.href — reloading the page out from under the login
+  // form before its `catch` block ever gets to show "invalid credentials".
+  // Confirmed live: without this check, a wrong-password attempt fired a
+  // second request to /api/auth/refresh and silently ate the error message.
+  if (response.status === 401 && !isRetry && path !== REFRESH_PATH && path !== LOGIN_PATH) {
     // Refresh tokens are single-use (rotated on every /api/auth/refresh call).
     // If N requests 401 at once and each called refreshTokens() independently,
     // they'd all read the same not-yet-rotated refreshToken and all POST it.

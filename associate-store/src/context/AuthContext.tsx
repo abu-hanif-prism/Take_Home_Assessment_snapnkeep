@@ -17,16 +17,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // Same abort-on-unmount pattern as useProducts/useAdminOrders — without
+  // it, StrictMode's dev-only double-invoke (mount → cleanup → mount) fires
+  // GET /api/auth/me twice on every app load, visible as a duplicate call
+  // in the Network tab. Harmless functionally (both resolve to the same
+  // user), but the guard costs nothing and keeps this consistent with every
+  // other data-fetching effect in the app instead of being the one place
+  // that skips it.
   useEffect(() => {
     if (!getToken()) {
       setLoading(false)
       return
     }
 
-    apiFetch<User>('/api/auth/me')
-      .then(setUser)
-      .catch(() => setUser(null))
-      .finally(() => setLoading(false))
+    const controller = new AbortController()
+
+    apiFetch<User>('/api/auth/me', { signal: controller.signal })
+      .then((result) => {
+        if (!controller.signal.aborted) setUser(result)
+      })
+      .catch((err: unknown) => {
+        if (err instanceof DOMException && err.name === 'AbortError') return
+        if (!controller.signal.aborted) setUser(null)
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false)
+      })
+
+    return () => {
+      controller.abort()
+    }
   }, [])
 
   const login = async (email: string, password: string) => {

@@ -13,6 +13,14 @@ export interface Product {
   updatedAt: string
 }
 
+// What the client sends to create a product — no _id/timestamps exist yet.
+export interface NewProductInput {
+  name: string
+  price: number
+  quantity: number
+  imageUrl: string
+}
+
 export interface PaginatedProducts {
   products: Product[]
   page: number
@@ -39,6 +47,28 @@ export interface OrderInput {
 // What the API returns once the order has been persisted.
 export interface Order extends OrderInput {
   _id: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface PopulatedOrderItem {
+  product: Product
+  quantity: number
+}
+
+// GET /api/orders (the admin list) returns a DIFFERENT shape for `products`
+// than POST /api/orders' response or `Order` above — confirmed live: this
+// endpoint populates the full Product for each line item, while creating
+// an order only ever echoes back the product id string. Modeled as its own
+// type rather than reusing Order, since the two aren't interchangeable.
+export interface AdminOrder {
+  _id: string
+  products: PopulatedOrderItem[]
+  name: string
+  email: string
+  phone: string
+  address: string
+  recurring_customer: boolean
   createdAt: string
   updatedAt: string
 }
