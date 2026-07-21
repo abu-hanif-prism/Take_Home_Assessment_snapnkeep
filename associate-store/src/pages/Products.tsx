@@ -274,7 +274,7 @@ function Products() {
           paints behind the page's own background, i.e. invisible. Found by
           confirming via computed styles that the elements existed with the
           right styles and still rendered nothing. */}
-      <div id="product-grid" className="relative isolate px-6 py-10">
+      <div id="product-grid" className="relative isolate overflow-x-hidden px-6 py-10">
         {/* Placed directly in this section (not a global fixed position) so
             they're guaranteed to land in visible white space instead of
             behind the opaque header/hero — see the write-up on why the

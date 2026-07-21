@@ -77,8 +77,22 @@
   background-size: 26px 26px;
 }
 
+/* Safety net, not just a fix for one spot: on mobile, ANY element that
+   extends past the viewport with nothing clipping it (an absolutely-
+   positioned decorative blob, most often) makes the browser widen its
+   whole layout viewport to fit it, then scale the entire page down to
+   compensate — which looks exactly like the page "shrunk and got framed
+   with grey margins" on a phone, even though every individual element is
+   sized correctly. Found via a real product-grid blob missing overflow-
+   hidden on its container. That one spot is now fixed directly, but this
+   stops the same class of bug from reappearing anywhere else. */
+html {
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
+  overflow-x: hidden;
   background: var(--bg);
 }
 
